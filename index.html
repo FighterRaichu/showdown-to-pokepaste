@@ -9,15 +9,15 @@
 <body>
     <div class="container">
         <h1>Convertidor de Showdown a Pokepaste</h1>
-        <p>Pega el enlace de Pokémon Showdown (`https://psim.us/t/...`) o el código del equipo:</p>
+        <p>Pega el enlace de Showdown (psim.us) o el texto exportado del equipo:</p>
         
-        <input type="text" id="inputShowdown" placeholder="Ej: https://psim.us/t/2005148-gkaohg1uanlcmw1dv7xj o solo el código">
+        <textarea id="inputShowdown" rows="5" placeholder="Ej: https://psim.us/t/... o pega el texto plano del Teambuilder"></textarea>
         <button id="btnConvertir" onclick="convertirEquipo()">Convertir a Pokepaste</button>
 
         <div id="loading" class="hidden">Procesando equipo... por favor espera.</div>
         
         <div id="resultado" class="hidden">
-            <h3>¡Éxito! Tu Pokepaste está listo:</h3>
+            <h3>¡Éxito!</h3>
             <a id="linkResultado" href="#" target="_blank"></a>
         </div>
         
