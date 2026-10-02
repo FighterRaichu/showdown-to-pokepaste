@@ -6,7 +6,6 @@ async function convertirEquipo() {
     let linkResultado = document.getElementById("linkResultado");
     let errorDiv = document.getElementById("error");
 
-
     resultadoDiv.classList.add("hidden");
     errorDiv.classList.add("hidden");
 
@@ -15,7 +14,6 @@ async function convertirEquipo() {
         return;
     }
 
-
     let codigoMatch = inputVal.match(/(?:psim\.us\/t\/)?([a-zA-Z0-9-_]+)/);
     let codigo = codigoMatch ? codigoMatch[1] : inputVal;
 
@@ -23,44 +21,58 @@ async function convertirEquipo() {
     btn.disabled = true;
 
     try {
-
         let urlShowdown = `https://psim.us/t/${codigo}`;
-        let response = await fetch(urlShowdown);
+        let proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlShowdown)}`;
+        
+        let response = await fetch(proxyUrl);
         
         if (!response.ok) {
-            throw new Error("No se pudo encontrar el equipo en Pokémon Showdown. Verifica que el enlace sea correcto.");
+            throw new Error("No se pudo encontrar el equipo en Pokémon Showdown.");
         }
 
         let textoEquipo = await response.text();
 
-        let formData = new URLSearchParams();
-        formData.append("paste", textoEquipo);
-        formData.append("title", "Convertido desde Showdown");
-
-        let responsePokepaste = await fetch("https://pokepast.es/", {
-            method: "POST",
-            body: formData,
-
-            redirect: "follow"
-        });
-
-        let urlFinal = responsePokepaste.url;
-
-        if (!urlFinal || urlFinal.includes("error")) {
-            throw new Error("Pokepaste no devolvió un enlace válido.");
+        if (!textoEquipo || textoEquipo.trim() === "") {
+            throw new Error("El equipo recuperado está vacío.");
         }
 
-        linkResultado.href = urlFinal;
-        linkResultado.innerText = urlFinal;
-        resultadoDiv.classList.remove("hidden");
+        enviarPorFormularioInvisible(textoEquipo);
 
     } catch (err) {
         console.error(err);
-        mostrarError("Ocurrió un error al procesar el equipo. (Nota: Si el navegador bloquea la petición por políticas CORS de Pokepaste, requeriría un pequeño proxy intermedio, pero prueba primero ejecutándolo en GitHub Pages).");
+        mostrarError("Error: " + err.message);
     } finally {
         loading.classList.add("hidden");
         btn.disabled = false;
     }
+}
+
+function enviarPorFormularioInvisible(textoEquipo) {
+    let form = document.createElement("form");
+    form.method = "POST";
+    form.action = "https://pokepast.es/";
+    form.target = "_blank";
+
+    let inputPaste = document.createElement("textarea");
+    inputPaste.name = "paste";
+    inputPaste.value = textoEquipo;
+    form.appendChild(inputPaste);
+
+    let inputTitle = document.createElement("input");
+    inputTitle.type = "hidden";
+    inputTitle.name = "title";
+    inputTitle.value = "Convertido desde Showdown";
+    form.appendChild(inputTitle);
+
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+
+    let resultadoDiv = document.getElementById("resultado");
+    let linkResultado = document.getElementById("linkResultado");
+    linkResultado.href = "https://pokepast.es/";
+    linkResultado.innerText = "¡Se ha abierto una pestaña con tu Pokepaste creado!";
+    resultadoDiv.classList.remove("hidden");
 }
 
 function mostrarError(mensaje) {
