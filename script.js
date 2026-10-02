@@ -1,7 +1,6 @@
-async function convertirEquipo() {
-    let inputVal = document.getElementById("inputShowdown").value.trim();
+function convertirEquipo() {
+    let textoEquipo = document.getElementById("inputShowdown").value.trim();
     let btn = document.getElementById("btnConvertir");
-    let loading = document.getElementById("loading");
     let resultadoDiv = document.getElementById("resultado");
     let linkResultado = document.getElementById("linkResultado");
     let errorDiv = document.getElementById("error");
@@ -9,40 +8,18 @@ async function convertirEquipo() {
     resultadoDiv.classList.add("hidden");
     errorDiv.classList.add("hidden");
 
-    if (!inputVal) {
-        mostrarError("Por favor, introduce un enlace o código válido.");
+    if (!textoEquipo) {
+        mostrarError("Por favor, pega el texto del equipo.");
         return;
     }
 
-    let codigoMatch = inputVal.match(/(?:psim\.us\/t\/)?([a-zA-Z0-9-_]+)/);
-    let codigo = codigoMatch ? codigoMatch[1] : inputVal;
-
-    loading.classList.remove("hidden");
     btn.disabled = true;
 
     try {
-        let urlShowdown = `https://psim.us/t/${codigo}`;
-        let proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(urlShowdown)}`;
-        
-        let response = await fetch(proxyUrl);
-        
-        if (!response.ok) {
-            throw new Error("No se pudo encontrar el equipo en Pokémon Showdown.");
-        }
-
-        let textoEquipo = await response.text();
-
-        if (!textoEquipo || textoEquipo.trim() === "") {
-            throw new Error("El equipo recuperado está vacío.");
-        }
-
         enviarPorFormularioInvisible(textoEquipo);
-
     } catch (err) {
         console.error(err);
         mostrarError("Error: " + err.message);
-    } finally {
-        loading.classList.add("hidden");
         btn.disabled = false;
     }
 }
@@ -73,6 +50,8 @@ function enviarPorFormularioInvisible(textoEquipo) {
     linkResultado.href = "https://pokepast.es/";
     linkResultado.innerText = "¡Se ha abierto una pestaña con tu Pokepaste creado!";
     resultadoDiv.classList.remove("hidden");
+    
+    document.getElementById("btnConvertir").disabled = false;
 }
 
 function mostrarError(mensaje) {
