@@ -20,7 +20,6 @@ async function convertirEquipo() {
     try {
         let textoEquipo = inputVal;
 
-        // Si lo que metieron es un enlace o código de Showdown, intenta descargarlo
         if (inputVal.includes("psim.us") || /^[a-zA-Z0-9-_]+$/.test(inputVal)) {
             let codigoMatch = inputVal.match(/(?:psim\.us\/t\/)?([a-zA-Z0-9-_]+)/);
             let codigo = codigoMatch ? codigoMatch[1] : inputVal;
@@ -36,11 +35,38 @@ async function convertirEquipo() {
             throw new Error("El contenido del equipo está vacío.");
         }
 
-        enviarPorFormularioInvisible(textoEquipo);
+        // Crear el Pokepaste haciendo una petición POST directa estructurada
+        let formData = new URLSearchParams();
+        formData.append("paste", textoEquipo);
+        formData.append("title", "Convertido desde Showdown");
+
+        let resPokepaste = await fetch("https://pokepast.es/create", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            redirect: "follow"
+        });
+
+        // Pokepaste redirige a la URL creada. Obtenemos esa URL final:
+        let urlFinal = resPokepaste.url;
+
+        if (!urlFinal || urlFinal === "https://pokepast.es/" || urlFinal.includes("/create")) {
+            throw new Error("Pokepaste no devolvió un enlace válido.");
+        }
+
+        linkResultado.href = urlFinal;
+        linkResultado.innerText = urlFinal;
+        resultadoDiv.classList.remove("hidden");
+
+        // Abrir automáticamente el link generado en una pestaña nueva
+        window.open(urlFinal, "_blank");
 
     } catch (err) {
         console.error(err);
-        mostrarError("Error al leer el enlace (CORS/Red). Solución: Copia el texto del equipo en Showdown (Export/Import) y pégalo aquí directamente.");
+        mostrarError("Error al conectar con Pokepaste (CORS). Usando método de respaldo por formulario...");
+        enviarPorFormularioInvisible(inputVal);
     } finally {
         loading.classList.add("hidden");
         btn.disabled = false;
@@ -50,7 +76,7 @@ async function convertirEquipo() {
 function enviarPorFormularioInvisible(textoEquipo) {
     let form = document.createElement("form");
     form.method = "POST";
-    form.action = "https://pokepast.es/";
+    form.action = "https://pokepast.es/create";
     form.target = "_blank";
 
     let inputPaste = document.createElement("textarea");
@@ -67,12 +93,6 @@ function enviarPorFormularioInvisible(textoEquipo) {
     document.body.appendChild(form);
     form.submit();
     document.body.removeChild(form);
-
-    let resultadoDiv = document.getElementById("resultado");
-    let linkResultado = document.getElementById("linkResultado");
-    linkResultado.href = "https://pokepast.es/";
-    linkResultado.innerText = "¡Se ha abierto una pestaña con tu Pokepaste creado!";
-    resultadoDiv.classList.remove("hidden");
 }
 
 function mostrarError(mensaje) {
